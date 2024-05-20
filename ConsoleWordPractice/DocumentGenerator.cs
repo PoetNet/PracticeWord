@@ -14,6 +14,8 @@ public class DocumentGenerator
 
         try
         {
+            AddImages(document);
+
             AddHeader(document,
                 @"ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ «*********»
                 ********, Г. ********, ******** ОБЛАСТЬ ****, Д. -. ОФ.
@@ -35,7 +37,9 @@ public class DocumentGenerator
 
             AddFooter(document, "Стоимость строительства ангара размером 20х50м с боковой высотой 6 м составит; *.*** ***** (**** ********** ***** ******) рублей 00 копеек\nСрок строительства: 50 рабочих дней.\nУсловия оплаты: Рассрочка платежа до 19.10.2024г");
             string fileName = Guid.NewGuid().ToString();
-            //document.SaveAs2($@"");
+
+            SetDocumentMargins(document, 1.5f, 1.5f);
+
             document.SaveAs(@$"C:\Users\Роман\Desktop\Examples\{fileName}.docx");
 
             app.Documents.Open(@$"C:\Users\Роман\Desktop\Examples\{fileName}.docx");
@@ -51,6 +55,43 @@ public class DocumentGenerator
         {
             app.Quit();
             Marshal.ReleaseComObject(app);
+        }
+    }
+
+    static void AddImages(Document document)
+    {
+        var currentDirectory = Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory)?
+            .Parent?
+            .Parent?
+            .Parent?
+            .FullName;
+
+        if (currentDirectory == null) return;
+
+        string logoPath = Path.Combine(currentDirectory, "images", "logo.png");
+        string qualityPath = Path.Combine(currentDirectory, "images", "quality.png");
+
+        var docRange = document.Content.Paragraphs.Add().Range;
+
+        InlineShape inlineShape1 = docRange.InlineShapes.AddPicture(logoPath);
+        docRange.InsertParagraphAfter();
+
+        docRange = document.Content.Paragraphs.Add().Range;
+        InlineShape inlineShape2 = docRange.InlineShapes.AddPicture(qualityPath);
+        docRange.InsertParagraphAfter();
+    }
+
+    static void SetDocumentMargins(Document document, float leftMarginCm, float rightMarginCm)
+    {
+        PageSetup pageSetup = document.Sections[1].PageSetup;
+
+        pageSetup.LeftMargin = leftMarginCm * 28.35f;
+        pageSetup.RightMargin = rightMarginCm * 28.35f;
+
+        foreach (Section section in document.Sections)
+        {
+            section.PageSetup.LeftMargin = pageSetup.LeftMargin;
+            section.PageSetup.RightMargin = pageSetup.RightMargin;
         }
     }
 
@@ -79,6 +120,8 @@ public class DocumentGenerator
 
     static void FormatTable(Table table)
     {
+        table.Range.ParagraphFormat.Alignment = WdParagraphAlignment.wdAlignParagraphCenter;
+
         table.Rows[1].Range.Font.Bold = 1;
         table.Rows[1].Range.Font.Size = 11;
         table.Range.Font.Color = WdColor.wdColorBlack;
@@ -103,7 +146,7 @@ public class DocumentGenerator
         }
 
         table.Columns[1].Width = 40;
-        table.Columns[2].Width = 200;
+        table.Columns[2].Width = 300;
         table.Columns[3].Width = 40;
         table.Columns[4].Width = 50;
         table.Columns[5].Width = 75;
